@@ -10,8 +10,8 @@ from torch.utils.data import Dataset, DataLoader, random_split
 from matplotlib import pyplot as plt
 import csv
 import random
-from socket import *
-from threading import Thread
+#from socket import *
+#from threading import Thread
 from torch.autograd import Variable
 import torch
 import torch.nn as nn
@@ -19,21 +19,20 @@ from torch import optim
 from torch.autograd._functions import tensor
 from torch.nn import init
 import torch.nn.functional as F
-import pickle, struct
+#import pickle, struct
 import torchvision
 from torchvision import datasets, transforms
-from time import sleep
+#from time import sleep
 import time
-from collections import OrderedDict
+#from collections import OrderedDict
 import numpy as np
-from prettytable import PrettyTable
 #from sklearn.metrics import confusion_matrix
 from data_process import Widar_Dataset,data_reader,cifar_10_load,data_reader1,SVHN_load
-from model import cifar10_MLP,cifar10_LeNet,fashion_MLP,fashion_LeNet,fashion_ResNet,Widar_LeNet,Widar_ResNet18,Widar_MLP,SVHN_MLP,SVHN_ResNet18
+from model import cifar10_LeNet,fashion_LeNet,fashion_ResNet,Widar_LeNet,Widar_ResNet18,SVHN_ResNet18
 from resnet import cifar10_ResNet18
-from plot import ConfusionMatrix
+#from plot import ConfusionMatrix
 
-
+##########Hyperparameter settings
 client_n = 5  # num of clients
 max_comunication = 50  # communication rounds
 root = './' 
@@ -47,7 +46,7 @@ decay_rate =  0.95  ###learning rate decay
 
 
 
-
+#########Dataset loading
 for i in range(client_n):
     j = []
     train_loader.append(j)
@@ -81,16 +80,41 @@ test_dataset = torchvision.datasets.FashionMNIST(root='./FashionMNIST/', train=F
 #test_dataset = torchvision.datasets.CIFAR10(root='./cifar10', train=False,transform=transforms.ToTensor())
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset,batch_size=batch_size,shuffle=False)
 
-#Loading model
-#current_model = fashion_MLP()
+
+"""Non-IID data split """"
+'''
+train_dataset = datasets.FashionMNIST(root="./FashionMNIST/", train=True, transform=transforms.ToTensor(), download=True)
+train_labels = np.array(train_dataset.targets)
+DIRICHLET_ALPHA = 0.5 #########Non-IID parameter, the smaller it is, the greater the degree of non-IID
+
+#######Client data set partition index
+client_idcs = dirichlet_split_noniid(train_labels, alpha=DIRICHLET_ALPHA, n_clients=client_n) #############Client data partitioning
+client_datas = []
+
+for i in range(client_n):
+    j = []
+    client_datas.append(j)
+    train_loader.append(j)
+    
+######Divide the data set to 10 clients by non-iid
+for i in range(client_n):
+    for num1 in client_idcs[i]:
+        client_datas[i].append(train_dataset[num1])
+
+for i in range(client_n):
+    train_loader[i] = torch.utils.data.DataLoader(dataset=client_datas[i], batch_size=batch_size, shuffle=True)
+
+test_dataset = torchvision.datasets.FashionMNIST(root='./FashionMNIST/', train=False, transform=torchvision.transforms.ToTensor())
+test_loader = torch.utils.data.DataLoader(dataset=test_dataset,batch_size=batch_size,shuffle=False)
+'''
+
+###############Loading model
 #current_model = fashion_LeNet()
 current_model = fashion_ResNet()
 #current_model = cifar10_LeNet()
 #current_model = cifar10_ResNet18()
-#current_model = cifar10_MLP()
 #current_model = cifar10_LeNet()
 #current_model = SVHN_ResNet18()
-#current_model = SVHN_MLP()
 
 model_c = []
 
