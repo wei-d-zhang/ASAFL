@@ -80,8 +80,22 @@ test_dataset = torchvision.datasets.FashionMNIST(root='./FashionMNIST/', train=F
 #test_dataset = torchvision.datasets.CIFAR10(root='./cifar10', train=False,transform=transforms.ToTensor())
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset,batch_size=batch_size,shuffle=False)
 
+#############SVHN data loading
+'''
+train_dataset = torchvision.datasets.SVHN(root='./SVHN',split='train',download=False,transform=torchvision.transforms.ToTensor())
+test_dataset = torchvision.datasets.SVHN(root='./SVHN',split='test',download=False,transform=torchvision.transforms.ToTensor())
 
-"""Non-IID data split """"
+all_train_size = len(train_dataset) 
+client_data_len = int(all_train_size/5)
+datasets = []
+datasets = torch.utils.data.random_split(train_dataset, [client_data_len, client_data_len,client_data_len,client_data_len,all_train_size - 4*client_data_len])
+for i in range(client_n):
+    data_set = datasets[i]
+    train_loader[i] = torch.utils.data.DataLoader(dataset=data_set, batch_size=64, shuffle=True)
+test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=128, shuffle=True)
+'''
+
+##############"""Non-IID data split """"
 '''
 train_dataset = datasets.FashionMNIST(root="./FashionMNIST/", train=True, transform=transforms.ToTensor(), download=True)
 train_labels = np.array(train_dataset.targets)
