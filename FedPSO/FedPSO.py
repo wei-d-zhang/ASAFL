@@ -27,7 +27,6 @@ from resnet import cifar10_ResNet18
 client_n = 5  # num of clients
 max_comunication = 50  # communication rounds
 root = './' 
-learn_rate = 0.005  #learning rate
 batch_size = 128 
 train_loader, dataset_label, dataset_label_client, train_dataset_client = [], [], [], []
 #fedavg_loss = []
@@ -131,15 +130,18 @@ class FL(object):
         
     def run(self):
         comunication_n = 0
+        min_loss = float('inf')
+        min_index = -1
         ######Global iterative procedure
         while comunication_n < max_comunication:  # communication number 
             for i in range(client_n):
                 self.local_update(i) #####Client local location update and optimal location update
                 ########Determine the optimal global location
-                if self.local_best_scores[i] <= self.global_best_score:
-                    self.global_best_score = self.local_best_scores[i]
-                    #print("Global best loss: ",self.global_best_score)
-                    self.global_best_model = copy.deepcopy(self.local_best_models[i])
+                if self.local_best_scores[i] <= min_loss:
+                    min_loss = self.local_best_scores[i]
+                    min_index = i
+            self.global_best_score = min_loss
+            self.global_best_model = copy.deepcopy(self.local_best_models[min_index])
             
             global_loss, global_acc= self.test(self.global_best_model.state_dict())
             fedavg_accuracy.append(round(global_acc, 2))
@@ -147,7 +149,7 @@ class FL(object):
             
             comunication_n = comunication_n +1
 
-        print('训练完毕')
+        print('over!')
         
         f = open('results/FedPSO/fashion-lenet-5.csv', 'w', encoding='utf-8', newline='')
         csv_write = csv.writer(f)
@@ -159,7 +161,7 @@ class FL(object):
         model.load_state_dict(model_param)
         model.train()  # Set this parameter to trainning mode
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=learn_rate)  # Initializes the optimizer
+        optimizer = optim.SGD(model.parameters(), lr=0.005)  # Initializes the optimizer
         
         for i in range(CLIENT_EPOCHS):
             for batch_idx, (data, target) in enumerate(t_dataset):
@@ -189,7 +191,6 @@ class FL(object):
             data, target = Variable(data), Variable(target)  
             output = self.model(data)
             _,predicts = torch.max(output.data, 1)
-            #confusion.update(predicts.cpu().numpy(), target.cpu().numpy())
                 
             test_loss += F.cross_entropy(output, target,
                                              size_average=False).item()  # sum up batch loss Indicates that all loss values are added
@@ -197,7 +198,6 @@ class FL(object):
             correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Add up the number of data that predicted correctly
            
         test_loss /= len(test_loader.dataset)  # Since all loss values are added up, the average loss is obtained by dividing by the total data length
-        #fedavg_loss.append(round(test_loss, 4))
         acc = (100. * correct / len(test_loader.dataset)).tolist()
         #fedavg_accuracy.append(round(acc, 2))
         #print('\n 测试loss: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(test_loss, correct,
