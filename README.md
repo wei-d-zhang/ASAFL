@@ -1,4 +1,7 @@
+# ASAFL
+
 ########### Abstract #############
+
 Federated learning (FL) trains machine learning models using distributed user devices without exposing their data in Internet of Things (IoT). 
 However, resource heterogeneity and data distribution variability among devices cause communication bottleneck, staleness and Non-IID issues in FL. 
 We propose ASAFL, an Asynchronous Federated Learning with Adaptive Scheduling Strategy, to mitigate these challenges. 
@@ -7,7 +10,7 @@ Our theoretical analysis confirms ASAFL’s convergence, and experiments show it
 
 
 
-# ASAFL
+
 1、Requirement：
 pytorch 1.12.0 and cuda 11.3 in ubuntu 20.04.
 pip install copy,random,numpy
