@@ -35,7 +35,7 @@ fedavg_accuracy = []
 CLIENT_EPOCHS = 1 #local training interaion
 
 #### PSO parameter
-omega=0.3
+omega=0.5
 c1=2
 c2=2
 
@@ -108,6 +108,7 @@ class FL(object):
       
         #PSO speed update and position update
         for j, (param, lb_param, gb_param) in enumerate(zip(step_model.parameters(), local_best_model.parameters(), self.global_best_model.parameters())):
+            #print(step_model.parameters()[j])
             new_v = omega * self.velocities[j]
             new_v = new_v + c1 * random.random() * (lb_param - param)
             new_v = new_v + c2 * random.random() * (gb_param - param)
@@ -122,7 +123,7 @@ class FL(object):
         self.local_models[i].load_state_dict(step_model.state_dict())  ######Update current location
         #####Calculation of fitness (loss)
         now_param = self.train(train_loader[i],step_model.state_dict())
-        now_loss,acc = self.test(self.local_models[i].state_dict())
+        now_loss,acc = self.test(now_param)
         #######Search for the optimal local location
         if now_loss <= self.local_best_scores[i]:
             self.local_best_models[i].load_state_dict(now_param) 
@@ -140,7 +141,6 @@ class FL(object):
                     self.global_best_score = self.local_best_scores[i]
                     #print("Global best loss: ",self.global_best_score)
                     self.global_best_model = copy.deepcopy(self.local_best_models[i])
-            
             global_loss, global_acc= self.test(self.global_best_model.state_dict())
             fedavg_accuracy.append(round(global_acc, 2))
             print("The loss of the {} round is: {} and the acc is: {}".format(comunication_n,global_loss,global_acc))
@@ -149,7 +149,7 @@ class FL(object):
 
         print('Over!')
         
-        #f = open('results/FedPSO/fashion-lenet-5.csv', 'w', encoding='utf-8', newline='')
+        #f = open('results/FedPSO/0.5/fashion-lenet-2.csv', 'w', encoding='utf-8', newline='')
         #csv_write = csv.writer(f)
         #csv_write.writerow(fedavg_accuracy) 
         
@@ -159,7 +159,7 @@ class FL(object):
         model.load_state_dict(model_param)
         model.train()  # Set this parameter to trainning mode
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=0.005)  # Initializes the optimizer
+        optimizer = optim.SGD(model.parameters(), lr=0.001)  # Initializes the optimizer
         
         for i in range(CLIENT_EPOCHS):
             for batch_idx, (data, target) in enumerate(t_dataset):
@@ -197,12 +197,8 @@ class FL(object):
             correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Add up the number of data that predicted correctly
            
         test_loss /= len(test_loader.dataset)  # Since all loss values are added up, the average loss is obtained by dividing by the total data length
-        #fedavg_loss.append(round(test_loss, 4))
         acc = (100. * correct / len(test_loader.dataset)).tolist()
-        #fedavg_accuracy.append(round(acc, 2))
-        #print('\n 测试loss: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(test_loss, correct,
-                                                                                        #len(test_loader.dataset),
-                                                                                        #100. * correct / len(test_loader.dataset)))
+        
         return test_loss,acc
 
 def main():
